@@ -50,6 +50,8 @@
        (apply concat (map #(all-kidoku n w h clues %) grids))))))
 
 
+; Hereafter, call each individual blank a "cell" and each box of cells in which each letter appears only once a "region"
+
 (defn blank-grid [n]
   "Returns a list of rows, each a list of cells, each a list of possible numbers for this cell."
   (for [row (range n)]
@@ -114,13 +116,37 @@
 
 (defn regions-to-rows [grid]
   "Moves each region into a row (result may not be square)."
-  grid
-  )
+  (let [w 3
+        h 2
+        n (count grid)
+        ; n should equal w*h, but there may not be n regions in the grid
+        num-regions (/ (* n n) w h)
+        ]
+    (for [region (range num-regions)]
+      (for [i (range n)]
+        (let [row (+ (int (/ i w)) (* h (int (/ region (int (/ n w))))))
+              col (+ (mod i w) (* w (mod region (int (/ n w)))))
+              ]
+        (nth (nth grid row) col))))))
 
 (defn rows-to-regions [grid]
   "Puts each row of a grid (may not be square) into a region (resulting in square grid)."
-  grid
-  )
+  (let [w 3
+        n (count (first grid))
+        ]
+    ; TODO - make this work for something other than 6x6
+    (list (concat (take 3 (drop 0 (nth grid 0)))
+                  (take 3 (drop 0 (nth grid 1))))
+          (concat (take 3 (drop 3 (nth grid 0)))
+                  (take 3 (drop 3 (nth grid 1))))
+          (concat (take 3 (drop 0 (nth grid 2)))
+                  (take 3 (drop 0 (nth grid 3))))
+          (concat (take 3 (drop 3 (nth grid 2)))
+                  (take 3 (drop 3 (nth grid 3))))
+          (concat (take 3 (drop 0 (nth grid 4)))
+                  (take 3 (drop 0 (nth grid 5))))
+          (concat (take 3 (drop 3 (nth grid 4)))
+                  (take 3 (drop 3 (nth grid 5)))))))
 
 (defn simplify-kidoku [grid]
   "Simplify a 6x6 kidoku as much as possible."
