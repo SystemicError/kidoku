@@ -97,3 +97,10 @@
         ]
     ((apply comp ph-fns) row)
     ))
+
+(defn solved? [grid]
+  "Returns true iff every cell is a set of order 1."
+  (let [cells (apply concat grid)
+        orders (map count cells)]
+    (apply = (conj orders 1)))
+  )
