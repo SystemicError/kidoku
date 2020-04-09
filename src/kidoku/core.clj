@@ -58,6 +58,15 @@
     (for [col (range n)]
       (set (map inc (range n))))))
 
+(defn grid-to-str [grid]
+  "Prints a grid nicely."
+  (let [cell-to-char (fn [cell] (if (< 1 (count cell))
+                                  "  "
+                                  (str (first (sort cell)) " ")))
+        row-to-line (fn [row] (str (apply str (map cell-to-char row)) "\n"))
+        ]
+    (apply str (map row-to-line grid))))
+
 (defn pigeonhole-set? [cells]
   "Determines if the given list of cells has exactly as many candidates as there are cells.  If so, return those candidates.  If not, return nil."
   (let [n (count cells)
@@ -160,3 +169,35 @@
       (if (= region-ruled grid)
         grid
         (recur region-ruled)))))
+
+(defn generate-kidoku
+  "Generates a 6x6 kidoku."
+  ([] (generate-kidoku (blank-grid 6)))
+  ([grid]
+   (let [simplified (simplify-kidoku grid)]
+     (if (solved? simplified)
+       grid ; base case
+       (let [; add a hint to our grid
+             indices (for [r (range 6) c (range 6)]
+                       {:row r :col c})
+             unoccupied (filter #(< 1 (count (nth (nth simplified (:row %)) (:col %)))) indices)
+             index (rand-nth unoccupied)
+             row (:row index)
+             col (:col index)
+             unhinted-row (nth grid row)
+             hint #{(rand-nth (sort (nth (nth simplified row) col)))}
+             hinted-row (concat (take col unhinted-row)
+                                (list hint)
+                                (drop (inc col) unhinted-row))
+             hinted-grid (concat (take row grid)
+                                 (list hinted-row)
+                                 (drop (inc row) grid))
+             dummy (println (str "\ngrid" (grid-to-str grid)
+             ;                    "\nindices:\n" (into [] indices)
+                                 "\nunoccupied:\n" (into [] unoccupied)
+             ;                    "\nindex: " index
+                                 "\nhinted-grid:\n" (grid-to-str hinted-grid)
+                                 ))
+             ]
+         (recur hinted-grid))))))
+
