@@ -54,16 +54,30 @@
   "Returns a list of rows, each a list of cells, each a list of possible numbers for this cell."
   (for [row (range n)]
     (for [col (range n)]
-      (map inc (range n)))))
+      (set (map inc (range n))))))
 
 (defn pigeonhole-set? [cells]
   "Determines if the given list of cells has exactly as many candidates as there are cells.  If so, return those candidates.  If not, return nil."
   (let [n (count cells)
-        letters (reduce set/union (map set cells))
+        letters (reduce set/union cells)
         m (count letters)]
     (if (= n m)
       letters
       nil)))
+
+(defn apply-pigeonhole [ph cells]
+  "Removes from any cell containing letters outside ph any letters inside ph."
+  ; For each pigeonhole subset
+    ; (1 2) (1 2) (1 2 3) (3 4) -> {1 2} {1 2 3}
+  ; remove the pigeonhole subset from any cell that contains things outside that subset
+    ; (1 2) (1 2) (3) (4)
+    (let [cleave (fn [cell]
+                   (if (= ph (set/union cell ph))
+                     cell
+                     (set/difference cell ph)))
+          ]
+      (map cleave cells)
+  ))
 
 (defn remove-duplicates [row]
   "For a list representing a row/col/cell, enforce the rule banning duplicates by returning a version with fewer candidates in each cell."
@@ -73,10 +87,13 @@
         index-subsets (apply concat (map #(combo/combinations letters %) (range 1 n))) ; a list of all combinations of indices
         indices-to-cells (fn [indices] (map #(nth row %) indices))
         subsets (map indices-to-cells index-subsets)
-        pigeonhole-subsets (filter pigeonhole-set? subsets)
+        pigeonhole-subsets (filter #(not= nil %) (map pigeonhole-set? subsets))
+        ph-fns (map #(partial apply-pigeonhole %) pigeonhole-subsets)
+
         dummy (println (str "(indices-to-cells [0 1])=" (into [] (indices-to-cells (list 0 1)))
                             "\nsubsets=" (into [] subsets)
+                            "\npigeonhole-subsets = " (into [] pigeonhole-subsets)
                             ))
         ]
-    (println (str (into [] pigeonhole-subsets)))
+    ((apply comp ph-fns) row)
     ))
