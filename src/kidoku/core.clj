@@ -90,10 +90,10 @@
         pigeonhole-subsets (filter #(not= nil %) (map pigeonhole-set? subsets))
         ph-fns (map #(partial apply-pigeonhole %) pigeonhole-subsets)
 
-        dummy (println (str "(indices-to-cells [0 1])=" (into [] (indices-to-cells (list 0 1)))
-                            "\nsubsets=" (into [] subsets)
-                            "\npigeonhole-subsets = " (into [] pigeonhole-subsets)
-                            ))
+       ; dummy (println (str "(indices-to-cells [0 1])=" (into [] (indices-to-cells (list 0 1)))
+       ;                     "\nsubsets=" (into [] subsets)
+       ;                     "\npigeonhole-subsets = " (into [] pigeonhole-subsets)
+       ;                     ))
         ]
     ((apply comp ph-fns) row)
     ))
@@ -104,3 +104,33 @@
         orders (map count cells)]
     (apply = (conj orders 1)))
   )
+
+(defn transpose [grid]
+  "Transposes a square grid."
+  (let [n (count grid)]
+    (for [row (range n)]
+      (for [col (range n)]
+        (nth (nth grid col) row)))))
+
+(defn regions-to-rows [grid]
+  "Moves each region into a row (result may not be square)."
+  grid
+  )
+
+(defn rows-to-regions [grid]
+  "Puts each row of a grid (may not be square) into a region (resulting in square grid)."
+  grid
+  )
+
+(defn simplify-kidoku [grid]
+  "Simplify a 6x6 kidoku as much as possible."
+  (if (solved? grid)
+    grid ; base case
+    (let [n (count grid)
+          row-ruled (map remove-duplicates grid)
+          col-ruled (transpose (map remove-duplicates (transpose row-ruled)))
+          region-ruled (rows-to-regions (map remove-duplicates (regions-to-rows col-ruled)))
+          ]
+      (if (= region-ruled grid)
+        grid
+        (recur region-ruled)))))
